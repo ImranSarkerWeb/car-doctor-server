@@ -22,6 +22,24 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  console.log(authorization);
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "unathorize access" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (error, decoded) => {
+    if (error) {
+      return res
+        .status(403)
+        .send({ error: true, message: "Forbidden request" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     //jwt backend
@@ -65,7 +83,11 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyJWT, async (req, res) => {
+      const decoded = req.decoded;
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({ error: 1, message: "forbidden access" });
+      }
       let qurey = {};
       if (req.query?.email) {
         qurey = { email: req.query.email };

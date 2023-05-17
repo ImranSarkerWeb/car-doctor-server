@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 require("dotenv").config();
@@ -23,6 +24,16 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    //jwt backend
+
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN, {
+        expiresIn: "1h",
+      });
+
+      res.send({ token });
+    });
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const serviceCollection = client.db("carDoctor").collection("services");
